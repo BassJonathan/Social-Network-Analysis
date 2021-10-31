@@ -66,3 +66,85 @@ _Dies ist die einzige Sektzion die in Bullet points angeführt werden soll._
 * Wiederholung der Fragestellung
 * Zusammenfassung der zentralen Ergebnisse
 * (_Limitationen, weiterführende Kommentare, etc._)
+
+|-------------------------------------------------------------|
+
+## Install packages
+```{r}
+# install.packages("igraph", dependencies = T)
+# install.packages("igraphdata", dependencies = T)
+# install.packages("tidygraph", dependencies = T)
+# install.packages("tidyverse", dependencies = T)
+# install.packages("ggraph", dependencies = T)
+# install.packages("ggthemes", dependencies = TRUE) # a collection of a lot of themes for dataviz!
+# install.packages("gganimate", dependencies = TRUE) # an dynamic animation package
+# install.packages("gifski", dependencies = TRUE) # an engine to render gifs
+# install.packages("rnetcarto", dependencies = TRUE)
+```
+
+## Setup libraries
+```{r}
+library(igraph)
+library(igraphdata)
+
+library(ggraph)
+library(ggthemes)
+library(gganimate)
+library(gifski)
+
+library(tidyverse)
+library(tidygraph)
+
+library(RColorBrewer)
+library(rnetcarto)
+```
+
+
+## Remove old data
+```{r}
+rm(list = ls())
+```
+
+
+## Initialize data
+```{r}
+data("rfid")
+#rfid
+```
+
+
+## Remove loops as well as directional data and store as dataframe
+```{r}
+df <- as.undirected(simplify(rfid))
+#df
+```
+
+## Identify roles
+```{r}
+df.mat=as_adjacency_matrix(df, sparse = F)
+head(df.mat, 1)
+```
+
+## Add professions from dataframe
+```{r}
+rnc=netcarto(df.mat)
+rnc
+```
+
+## Number of modules
+```{r}
+df %>% as_tbl_graph() %>% activate(nodes) %>% mutate(name = row_number()) -> klm
+klm
+```
+
+## Plot
+```{r}
+test <- merge(x = klm , y = rnc[[1]], by = "name", all = TRUE)
+head(test, 10)
+```
+
+## Plot
+```{r warning=FALSE}
+ggplot(test, aes(y = connectivity, x = participation)) + 
+  geom_point(aes(color=Status, shape=role, size=module))
+```
