@@ -1,0 +1,68 @@
+---
+title: "Assignment"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+# Verändere Titel, Namen & Datum in dem Yaml header am Beginn des files!
+
+# Globale Chunk Optionen:
+knitr::opts_chunk$set(echo = TRUE)
+
+# Loading / Installing packages depending on whether it is already installed.
+uP <- function(...) {
+  x <- list(...)
+  for(p in x) {
+    if (!is.element(p, installed.packages()[,1])) {install.packages(p,dep = TRUE, repos = "http://cran.wu.ac.at")}
+    library(p, character.only = TRUE)}
+}
+uP('tidyverse', 'tidygraph', 'ggraph', 'tidylog')
+```
+
+<!-- Bitte Meta Infos anpassen -->
+
+| __Meta Infos__  |                                            |    
+|-----------------|--------------------------------------------|
+| Student:in      | Jonathan Baß                               |
+| Titel           | Hier könnte der Titel ihrer Arbeit stehen! |
+| Kurskontext     | Social Network Analysis                    |
+| Datum           | insertdate                                 |
+| Dozent          | Philipp M. Mendoza, M.Sc.                  |
+<!-- Hilfe für Tabellen: https://www.tablesgenerator.com/latex_tables -->
+Für weitere Anleitungen und Tipps siehe den [Syllabus](https://pmmendoza.notion.site/Syllabus-2021-c93a917f658649df854dd3035358cb73) und den [Eintrag zur Portfolioprüfung](https://pmmendoza.notion.site/Portfoliopr-fung-ein-paar-Tipps-2d5b6d52e1784006b22021d6dbe0b377).  
+
+Wichtig: das ganze sollte in der Form eines Blogpostes geschrieben sein; sprich ein Fließtext!
+Nachfolgend ein Vorschlag der Strukturierung eurer Arbeit; in jedem Report sollten *zumindest* die hier angeführten Punkte abgedeckt werden.
+
+### Executive Summary 
+_Dies ist die einzige Sektzion die in Bullet points angeführt werden soll._
+
+* Forschungsfrage
+* Datensatz
+* Strategie
+* Ergebnisse
+
+### Einleitung und Fragestellung  
+
+* Thema
+* Daten
+* Forschungsfrage
+* Relevanz der Forschungsfrage ("_so what_?")
+
+### Analysestrategie  
+
+* Operationalisierung eurer Forschungsfrage (welche Maße verwendet ihr um eure Forschungsfrage zu beantworten und warum?)
+* Charakterisierung des Netzwerks
+* Kontext der verwendeten Daten
+
+### Umsetzung  
+
+* Datenmanipulationen
+* Erklärung der Schritte
+* Interpretation der Visualisierungen 
+
+### Conclusio  
+
+* Wiederholung der Fragestellung
+* Zusammenfassung der zentralen Ergebnisse
+* (_Limitationen, weiterführende Kommentare, etc._)
