@@ -1,5 +1,5 @@
 ---
-title: "Assignment"
+title: "Assignment Social Network Analysis"
 output: pdf_document
 ---
 
@@ -34,42 +34,41 @@ Für weitere Anleitungen und Tipps siehe den [Syllabus](https://pmmendoza.notion
 Wichtig: das ganze sollte in der Form eines Blogpostes geschrieben sein; sprich ein Fließtext!
 Nachfolgend ein Vorschlag der Strukturierung eurer Arbeit; in jedem Report sollten *zumindest* die hier angeführten Punkte abgedeckt werden.
 
-### Executive Summary 
+## Executive Summary 
 _Dies ist die einzige Sektzion die in Bullet points angeführt werden soll._
-
+* Einleitung
 * Forschungsfrage
 * Datensatz
 * Strategie
 * Ergebnisse
 
-### Einleitung und Fragestellung  
+## Einleitung und Fragestellung
+Die Analyse und Nachverfolgung von Kontaktdaten ist in der Medizin und Forschung schon lange ein wichtiges Thema, momentan durch die aktuelle Corona-Pandemie jedoch relevanter als je zuvor. Bei engen oder langen Kontaken können Keime und Erreger zwischen den Personen ausgetauscht werden und sich Krankheiten auf diesem Weg verbreiten. Dies stellt im Alltag kein großes Problem dar, da die meisten Erreger harmlos sind und das menschliche Immunsystem den Ausbruch der Krankheit verhindern kann. Dies ist jedoch in Krankenhäusern nicht immer der Fall. Durch die hohe Konzentration an angewendeten Medikamenten wie Antibiotika können sich schnell multiressistente Keime bilden, welche auch Krankenhauskeime genannt werden. Eine detaillierte Beschreibung und Quantifizierung der Kontakte in Krankenhäusern kann deshalb wichtige Informationen für die Epidemiologie von Krankenhausinfektionen sowie für die Konzeption und Validierung von Kontrollmaßnahmen liefern. Wie diese Vorgenommen werden und welche Schlüsse aus der Analyse gezogen werden können wir in dem folgenden Beitrag erläutert.
 
-* Thema
-* Daten
-* Forschungsfrage
-* Relevanz der Forschungsfrage ("_so what_?")
+### Thema
+In der geriatrigerschen Abteilung eines Krankenhauses in Lyon, Frankreich wurde 2010 ein Experiment gemacht. Dafür wurden allen sich auf der Station befindlichen Personen mit tragbare RFID (Radio Frequency Identification) Sensoren ausgerüstet. Diese haben alle Interaktionen im Nahbereich von etwa 1,5m und einer zeitlichen Auflösung von 20 Sekunden über einem Zeitraum von vier Tagen und vier Nächten gemessen. Die Studie umfasste 46 Mitarbeiter des Gesundheitswesens und 29 Patienten und es wurden insgesamt 14.037 Kontakte erfasst.
 
-### Analysestrategie  
+### Daten
+Die Daten liegen als ein igraph graph-Objekt vor, welches die graph-Attribute "name" und "Citation", als vertex-Attribut "Status" und als edge-Attribut "Time" besitzt. "Status" beschreibt dabei die Rolle der Person. Dabei wird in Verwaltungspersonal (*ADM*), Ärzte (*MED*), medizinisches Personal wie Krankenschwestern und -pleger oder Hilfspersonal (*NUR*) und Patienten/Patientinnen (*PAT*) unterschieden. "Time" ist der Zeitstempel der Sekunde, an dem das 20-Sekunden Intervall ausgelaufen und nicht erneuert wurde.
+
+### Forschungsfrage
+Die Übertragung der Krankheiten geschieht durch persönlichen Kontakt. Personen, die viele Kontakte mit einer Vielzahl an Personen haben, können dabei als Superspreader fungieren und Krankheiten schnell verteilen. In der folgenden Ausarbeitung beschäftige ich mich mit der Frage, ob gewisse Rollen ein höheres Risiko haben solch ein Superspreader zu sein und ob die in Krankenhäusern durch organisatorische und räumlich gegebene Bildung von Gemeinschaften einen Einfluss auf eine mögliche Verberitung hat 
+
+### Relevanz der Forschungsfrage
+Die Kontaktnachverfolgung ist durch die aktuelle Corona-Pandemie ein aktuellers Thema denn je. Es gilt geschwächte und anfällige Personen zu schützen. Gerade in Krankenhäusern kann eine unkontrollierte Ausrbeitung des SarsCov2-Viruses durch einen Superspreader verherende Auswirkungen haben. Die Analyse und Beantwortung der Forschungsfrage kann bei der Entwicklung eines Schutzkonzeptes helfen und das allgemeine Risiko einer Ansteckung während eines Krankenhausaufenthaltes verringern.
+
+## Analysestrategie  
 
 * Operationalisierung eurer Forschungsfrage (welche Maße verwendet ihr um eure Forschungsfrage zu beantworten und warum?)
 * Charakterisierung des Netzwerks
 * Kontext der verwendeten Daten
 
-### Umsetzung  
+## Umsetzung  
 
-* Datenmanipulationen
-* Erklärung der Schritte
-* Interpretation der Visualisierungen 
+### Datenmanipulationen
 
-### Conclusio  
-
-* Wiederholung der Fragestellung
-* Zusammenfassung der zentralen Ergebnisse
-* (_Limitationen, weiterführende Kommentare, etc._)
-
-|-------------------------------------------------------------|
-
-## Install packages
+### Erklärung der Schritte
+### 1. Pakete installieren
 ```{r}
 # install.packages("igraph", dependencies = T)
 # install.packages("igraphdata", dependencies = T)
@@ -82,8 +81,8 @@ _Dies ist die einzige Sektzion die in Bullet points angeführt werden soll._
 # install.packages("rnetcarto", dependencies = TRUE)
 ```
 
-## Setup libraries
-```{r}
+### 2. Bibliotheken deklarieren
+```{r message=FALSE}
 library(igraph)
 library(igraphdata)
 
@@ -99,52 +98,136 @@ library(RColorBrewer)
 library(rnetcarto)
 ```
 
-
-## Remove old data
+### 3. Alte Daten aus dem Environment enfernen
 ```{r}
 rm(list = ls())
 ```
 
-
-## Initialize data
+### 4. Daten von igraphdata instanziieren
 ```{r}
 data("rfid")
-#rfid
 ```
 
-
-## Remove loops as well as directional data and store as dataframe
+### 5. Schleifen und direktionale Beziehungen entfernen und in Variable speichern
 ```{r}
 df <- as.undirected(simplify(rfid))
-#df
 ```
 
-## Identify roles
+### 6. igraph-Objekt in adjacency matrix convertieren
 ```{r}
 df.mat=as_adjacency_matrix(df, sparse = F)
 head(df.mat, 1)
 ```
 
-## Add professions from dataframe
+### 7. Simulierter annealing Algorithmus
 ```{r}
 rnc=netcarto(df.mat)
 rnc
 ```
 
-## Number of modules
+### 8. Neues igraph-Objekt mit Index als Spalte erstellen
 ```{r}
-df %>% as_tbl_graph() %>% activate(nodes) %>% mutate(name = row_number()) -> klm
-klm
+df %>% as_tbl_graph() %>% activate(nodes) %>% mutate(name = row_number()) -> df2
+df2
 ```
 
-## Plot
+### 9. Status mergen
 ```{r}
-test <- merge(x = klm , y = rnc[[1]], by = "name", all = TRUE)
+test <- merge(x = df2 , y = rnc[[1]], by = "name", all = TRUE)
 head(test, 10)
 ```
 
-## Plot
+### 10. Plot
 ```{r warning=FALSE}
 ggplot(test, aes(y = connectivity, x = participation)) + 
   geom_point(aes(color=Status, shape=role, size=module))
 ```
+
+### Interpretation der Visualisierungen 
+
+## Conclusio  
+
+### Wiederholung der Fragestellung
+### Zusammenfassung der zentralen Ergebnisse
+#### (_Limitationen, weiterführende Kommentare, etc._)
+
+
+<!-- ## Install packages -->
+<!-- ```{r} -->
+<!-- # install.packages("igraph", dependencies = T) -->
+<!-- # install.packages("igraphdata", dependencies = T) -->
+<!-- # install.packages("tidygraph", dependencies = T) -->
+<!-- # install.packages("tidyverse", dependencies = T) -->
+<!-- # install.packages("ggraph", dependencies = T) -->
+<!-- # install.packages("ggthemes", dependencies = TRUE) # a collection of a lot of themes for dataviz! -->
+<!-- # install.packages("gganimate", dependencies = TRUE) # an dynamic animation package -->
+<!-- # install.packages("gifski", dependencies = TRUE) # an engine to render gifs -->
+<!-- # install.packages("rnetcarto", dependencies = TRUE) -->
+<!-- ``` -->
+
+<!-- ## Setup libraries -->
+<!-- ```{r} -->
+<!-- library(igraph) -->
+<!-- library(igraphdata) -->
+
+<!-- library(ggraph) -->
+<!-- library(ggthemes) -->
+<!-- library(gganimate) -->
+<!-- library(gifski) -->
+
+<!-- library(tidyverse) -->
+<!-- library(tidygraph) -->
+
+<!-- library(RColorBrewer) -->
+<!-- library(rnetcarto) -->
+<!-- ``` -->
+
+
+<!-- ## Remove old data -->
+<!-- ```{r} -->
+<!-- rm(list = ls()) -->
+<!-- ``` -->
+
+
+<!-- ## Initialize data -->
+<!-- ```{r} -->
+<!-- data("rfid") -->
+<!-- #rfid -->
+<!-- ``` -->
+
+
+<!-- ## Remove loops as well as directional data and store as dataframe -->
+<!-- ```{r} -->
+<!-- df <- as.undirected(simplify(rfid)) -->
+<!-- #df -->
+<!-- ``` -->
+
+<!-- ## Identify roles -->
+<!-- ```{r} -->
+<!-- df.mat=as_adjacency_matrix(df, sparse = F) -->
+<!-- head(df.mat, 1) -->
+<!-- ``` -->
+
+<!-- ## Add professions from dataframe -->
+<!-- ```{r} -->
+<!-- rnc=netcarto(df.mat) -->
+<!-- rnc -->
+<!-- ``` -->
+
+<!-- ## Number of modules -->
+<!-- ```{r} -->
+<!-- df %>% as_tbl_graph() %>% activate(nodes) %>% mutate(name = row_number()) -> klm -->
+<!-- klm -->
+<!-- ``` -->
+
+<!-- ## Plot -->
+<!-- ```{r} -->
+<!-- test <- merge(x = klm , y = rnc[[1]], by = "name", all = TRUE) -->
+<!-- head(test, 10) -->
+<!-- ``` -->
+
+<!-- ## Plot -->
+<!-- ```{r warning=FALSE} -->
+<!-- ggplot(test, aes(y = connectivity, x = participation)) +  -->
+<!--   geom_point(aes(color=Status, shape=role, size=module)) -->
+<!-- ``` -->
