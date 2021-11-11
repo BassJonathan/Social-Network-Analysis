@@ -58,7 +58,7 @@ Die Übertragung von Krankheiten kann unter anderem durch persönlichen Kontakt 
 Die Kontaktnachverfolgung ist durch die aktuelle Corona-Pandemie ein wichtigeres Thema denn je. Es gilt geschwächte und anfällige Personen zu schützen. Gerade in Krankenhäusern kann eine unkontrollierte Ausrbeitung des SarsCov2-Viruses durch einen Superspreader verherende Auswirkungen haben. Die Analyse und Beantwortung der Forschungsfrage kann bei der Entwicklung eines Schutzkonzeptes helfen und das allgemeine Risiko einer Ansteckung während eines Krankenhausaufenthaltes verringern.
 
 ## Analysestrategie  
-Um die Forschungsfrage korrekt und vollständig beantworten zu können, reicht es nicht aus die reinen Verbindungen zu zählen. Sollte zum Beispiel ein Patient viel Kontakt mit anderen (infizierten) Patienten haben, würde dadurch keine Übertragung und damit auch keine Ausbreitung der Krankheit erfolgen. Aus diesem Grund muss man die Rollen der einzelnen Personen bei der Bewertung des Kontaktes berücksichtigen. Dafür können zwei Werte für jede Node berechnen: Der "Within-community Degree"-Wert (deutsch: Innergemeinschaftlicher Grad) beschreibt die Vernetzung innerhalb der eigenen Community. Dazu wird der "Participation Coefficient" (deutsch: Teilnahmekoeffizient) betrachtet. Dieser beschreibt die Vernetzung einer Person über die Grenzen der eigenen Community heraus. Für jede Node können beide Werte berechnet und auf einem Diagramm als Punkte ausgeplottet werden. Sollte zum Beispiel eine Person eine sehr gute Vernetzung innerhalb der eigenen Community, aber auch zu anderen Communites haben, ist das Risiko bei einer Infektion als Superspreader zu fungierten stark erhöht. Für die Berechnung dieser Schlüselwerte wird der Algorithmus "rnetcarto" verwendet. Rnectcarto bietet schnelle Netzwerkmodularität und Rollenberechnung durch simuliertes Annealing.
+Um die Forschungsfrage korrekt und vollständig beantworten zu können, reicht es nicht aus die reinen Verbindungen zu zählen. Sollte zum Beispiel ein Patient viel Kontakt mit anderen (infizierten) Patienten haben, würde dadurch keine Übertragung und damit auch keine Ausbreitung der Krankheit erfolgen. Aus diesem Grund muss man die Rollen der einzelnen Personen bei der Bewertung des Kontaktes berücksichtigen. Dafür können zwei Werte für jede Node berechnen: Der "Within-community Degree"-Wert (deutsch: Innergemeinschaftlicher Grad) beschreibt die Vernetzung innerhalb der eigenen Community. Dazu wird der "Participation Coefficient" (deutsch: Teilnahmekoeffizient) betrachtet. Dieser beschreibt die Vernetzung einer Person über die Grenzen der eigenen Community heraus. Für jede Node können beide Werte berechnet und auf einem Diagramm als Punkte ausgeplottet werden. Sollte zum Beispiel eine Person eine sehr gute Vernetzung innerhalb der eigenen Community, aber auch zu anderen Communites haben, ist das Risiko bei einer Infektion als Superspreader zu fungierten stark erhöht. Für die Berechnung dieser Schlüselwerte wird der Algorithmus "Netcarto" verwendet. Rnectcarto bietet schnelle Netzwerkmodularität und Rollenberechnung durch simuliertes Annealing.
 * Operationalisierung eurer Forschungsfrage (welche Maße verwendet ihr um eure Forschungsfrage zu beantworten und warum?)
 
 ???
@@ -121,38 +121,44 @@ data("rfid")
 ```
 
 ### 5. Schleifen und direktionale Beziehungen entfernen und in Variable speichern
-In Schritt 5 werden die direktionalen Beziehungen und Schleifen entfernt und durch undirektionale ersetzt.
+In Schritt 5 werden Schleifen entfernt und direktionale Beziehungen in inderktionale Beziehungen aufgelöst. Dadurch werden Fehler in der Darstellung vermieden.
 ```{r}
 df <- as.undirected(simplify(rfid))
 ```
 
 ### 6. igraph-Objekt in adjacency matrix convertieren
+Damit der Netrcarto-Algorithmus die Daten verarbeiten kann müssen diese als Adjazenzmatrix vorliegen. Der folgende Befehl konvertiert das Dateframe in dieses Format legt die neue Matrix als Vairiation der Variable df.
 ```{r}
 df.mat=as_adjacency_matrix(df, sparse = F)
 head(df.mat, 1)
 ```
 
 ### 7. Simulierter annealing Algorithmus
+Nun kann der Netcarto-Algorithmus angewandt werden. Dieser symuliert ein sogenanntes "annealing" oder auf Deutsch "abkühlen", und sich auf die Art und Weiße bezieht, wie die einzelnen Communities entstehen. Eine gute Analogie ist das Abkühlen von Metall, nachdem es zum glühen gebracht wurden. Zu diesem Zeitpunkt bewegen sich die einzelnen Atome noch sehr schnell - erkennbar an der Hitze- und Lichtemision. Im verlauf des Abkühlprozesses ordnen sich die Atome in einer kristallinen Form an und es wird ein nahezu optimaler Zustand erreicht. Zieht man nun die Verbindungen zu dem Algorithmus würde so wird das Netzwerk in einen ähnlichen Zustand gebracht und es können einzelne Module mit einer Wahrscheinlichkeit von bis zu 90% berechnet werden.
 ```{r}
 rnc=netcarto(df.mat)
 rnc
 ```
 
 ### 8. Neues igraph-Objekt mit Index als Spalte erstellen
+Uns liegt nun ein Dataframe mit den zu Beginn definierten Werten vor, welche auf das Modul und die Rolle beinhalten. Leider ist jedoch beim Erstellen der Adjacency-Matrix die Rolle verloren gegangen, da es sich bei der Spalte nicht um nummerische Werte handelt. Daher müssen wir die beiden Dataframes vereinen. Dafür fügen wir dem neu erstellten Dataframe eine Spalte mit dem Index hinzu, um im nächsten Schritt einen merge durchführen zu können. Da diese bei dem ursprünglichen DF "name" heißt, verwenden wir hier die gleiche Bezeichnung.
 ```{r}
 df %>% as_tbl_graph() %>% activate(nodes) %>% mutate(name = row_number()) -> df2
 df2
 ```
 
 ### 9. Status mergen
+Durch das Hinzufügen der Index-Spalte im vorherigen Schritt können wir nun einen Merge durchführen. Dabei verwenden wir den Index, welcher als "name" in der urpsünglichen Tabelle enthalten war. Nun haben wir ein Dataframe mit allen benötigten Werten, welche für die Auswertung relevant sind.
 ```{r}
 test <- merge(x = df2 , y = rnc[[1]], by = "name", all = TRUE)
 head(test, 10)
 ```
 
 ### 10. Plot
+Der letzte Schritt ist das Plotten mit ggplot. Als y-Werte verwenden wir dem "Within-community Degree", also den Wert, welcher die Vernetzung innerhalb der eigenen Community darstellt. Auf der x-Achse begindet sich
+"Participation Coefficient", bzw. die Vernetzung zu anderen Communities. Der Algorithmus unterscheidet dabei in verschiedene Rollen. Menschen, die weder eine hohe Vernetzung innerhalb ihrer Community noch außerhalb haben werden als 
 ```{r warning=FALSE}
-ggplot(test, aes(y = connectivity, x = participation)) + 
+ggplot(test, aes(y = Within-community-Degree, x = Participation-Coefficient)) + 
   geom_point(aes(color=Status, shape=role, size=module))
 ```
 
