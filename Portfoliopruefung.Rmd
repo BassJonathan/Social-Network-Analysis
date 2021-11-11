@@ -52,23 +52,30 @@ In der geriatrigerschen Abteilung eines Krankenhauses in Lyon, Frankreich wurde 
 Die Daten liegen als ein igraph graph-Objekt vor, welches die graph-Attribute "name" und "Citation", als vertex-Attribut "Status" und als edge-Attribut "Time" besitzt. "Status" beschreibt dabei die Rolle der Person. Dabei wird in Verwaltungspersonal (*ADM*), Ärzte (*MED*), medizinisches Personal wie Krankenschwestern und -pleger oder Hilfspersonal (*NUR*) und Patienten/Patientinnen (*PAT*) unterschieden. "Time" ist der Zeitstempel der Sekunde, an dem das 20-Sekunden Intervall ausgelaufen und nicht erneuert wurde.
 
 ### Forschungsfrage
-Die Übertragung der Krankheiten geschieht durch persönlichen Kontakt. Personen, die viele Kontakte mit einer Vielzahl an Personen haben, können dabei als Superspreader fungieren und Krankheiten schnell verteilen. In der folgenden Ausarbeitung beschäftige ich mich mit der Frage, ob gewisse Rollen ein höheres Risiko haben solch ein Superspreader zu sein und ob die in Krankenhäusern durch organisatorische und räumlich gegebene Bildung von Gemeinschaften einen Einfluss auf eine mögliche Verberitung hat 
+Die Übertragung von Krankheiten kann unter anderem durch persönlichen Kontakt übertragen werden. Personen, die viele Kontakte mit einer Vielzahl an Personen haben, können dabei als Superspreader fungieren und Krankheiten schnell verteilen. **In der folgenden Ausarbeitung beschäftige ich mich mit der Frage, ob gewisse Rollen in Krankenhäusern ein höheres Risiko haben solch ein Superspreader zu sein und ob die durch organisatorische und räumlich gegebene Bildung von Gemeinschaften einen Einfluss auf eine mögliche Verbereitung hat.**
 
 ### Relevanz der Forschungsfrage
-Die Kontaktnachverfolgung ist durch die aktuelle Corona-Pandemie ein aktuellers Thema denn je. Es gilt geschwächte und anfällige Personen zu schützen. Gerade in Krankenhäusern kann eine unkontrollierte Ausrbeitung des SarsCov2-Viruses durch einen Superspreader verherende Auswirkungen haben. Die Analyse und Beantwortung der Forschungsfrage kann bei der Entwicklung eines Schutzkonzeptes helfen und das allgemeine Risiko einer Ansteckung während eines Krankenhausaufenthaltes verringern.
+Die Kontaktnachverfolgung ist durch die aktuelle Corona-Pandemie ein wichtigeres Thema denn je. Es gilt geschwächte und anfällige Personen zu schützen. Gerade in Krankenhäusern kann eine unkontrollierte Ausrbeitung des SarsCov2-Viruses durch einen Superspreader verherende Auswirkungen haben. Die Analyse und Beantwortung der Forschungsfrage kann bei der Entwicklung eines Schutzkonzeptes helfen und das allgemeine Risiko einer Ansteckung während eines Krankenhausaufenthaltes verringern.
 
 ## Analysestrategie  
-
+Um die Forschungsfrage korrekt und vollständig beantworten zu können, reicht es nicht aus die reinen Verbindungen zu zählen. Sollte zum Beispiel ein Patient viel Kontakt mit anderen (infizierten) Patienten haben, würde dadurch keine Übertragung und damit auch keine Ausbreitung der Krankheit erfolgen. Aus diesem Grund muss man die Rollen der einzelnen Personen bei der Bewertung des Kontaktes berücksichtigen. Dafür können zwei Werte für jede Node berechnen: Der "Within-community Degree"-Wert (deutsch: Innergemeinschaftlicher Grad) beschreibt die Vernetzung innerhalb der eigenen Community. Dazu wird der "Participation Coefficient" (deutsch: Teilnahmekoeffizient) betrachtet. Dieser beschreibt die Vernetzung einer Person über die Grenzen der eigenen Community heraus. Für jede Node können beide Werte berechnet und auf einem Diagramm als Punkte ausgeplottet werden. Sollte zum Beispiel eine Person eine sehr gute Vernetzung innerhalb der eigenen Community, aber auch zu anderen Communites haben, ist das Risiko bei einer Infektion als Superspreader zu fungierten stark erhöht. Für die Berechnung dieser Schlüselwerte wird der Algorithmus "rnetcarto" verwendet. Rnectcarto bietet schnelle Netzwerkmodularität und Rollenberechnung durch simuliertes Annealing.
 * Operationalisierung eurer Forschungsfrage (welche Maße verwendet ihr um eure Forschungsfrage zu beantworten und warum?)
-* Charakterisierung des Netzwerks
-* Kontext der verwendeten Daten
 
+???
+* Charakterisierung des Netzwerks
+
+
+* Kontext der verwendeten Daten
+Anzahl nodes and edges
 ## Umsetzung  
 
 ### Datenmanipulationen
 
 ### Erklärung der Schritte
+Die folgende Auflistung beschreibt die einzelnen Schritte, welche für die Auswertung verwendet wurden.Diese könnnen chronologisch ausgeführt werden, um das gleiche Ergebniss zu erhalten.
+
 ### 1. Pakete installieren
+Zu Beginn müssen alle benötigten Pakete installiert werden. Darunter befinden sich unter anderem "igraphdata", aus welchem wir die Daten laden, standart-Pakete wie "ggraph". Zudem benötigen wir den oben erwähnten Annealing-Algorithmus "rnetcarto".
 ```{r}
 # install.packages("igraph", dependencies = T)
 # install.packages("igraphdata", dependencies = T)
@@ -81,7 +88,10 @@ Die Kontaktnachverfolgung ist durch die aktuelle Corona-Pandemie ein aktuellers 
 # install.packages("rnetcarto", dependencies = TRUE)
 ```
 
+
+
 ### 2. Bibliotheken deklarieren
+Die im letzen Schritt installierten Pakete werden nun als Bibliotheken deklariert.
 ```{r message=FALSE}
 library(igraph)
 library(igraphdata)
@@ -99,16 +109,19 @@ library(rnetcarto)
 ```
 
 ### 3. Alte Daten aus dem Environment enfernen
+Damit keine Konflikte mit alten Daten auftreten, und die Berechnungen möglichst perfomant laufen können, werden alle alten Daten aus dem Environment gelöscht.
 ```{r}
 rm(list = ls())
 ```
 
 ### 4. Daten von igraphdata instanziieren
+Nun instanziieren wir die Daten mit dem folgenden Befehl. Es existiert nun ein igraph graph-Objekt "rfid", welches die benötigten Daten beinhaltet. Dieses Objekt bildet die Grunlage für die folgenden Berechnungen.
 ```{r}
 data("rfid")
 ```
 
 ### 5. Schleifen und direktionale Beziehungen entfernen und in Variable speichern
+In Schritt 5 werden die direktionalen Beziehungen und Schleifen entfernt und durch undirektionale ersetzt.
 ```{r}
 df <- as.undirected(simplify(rfid))
 ```
