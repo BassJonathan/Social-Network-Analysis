@@ -82,9 +82,10 @@ Zu Beginn müssen alle benötigten Pakete installiert werden. Darunter befinden 
 # install.packages("tidygraph", dependencies = T)
 # install.packages("tidyverse", dependencies = T)
 # install.packages("ggraph", dependencies = T)
-# install.packages("ggthemes", dependencies = TRUE) # a collection of a lot of themes for dataviz!
-# install.packages("gganimate", dependencies = TRUE) # an dynamic animation package
-# install.packages("gifski", dependencies = TRUE) # an engine to render gifs
+# install.packages("GGally", dependencies = T)
+# install.packages("ggthemes", dependencies = TRUE)
+# install.packages("gganimate", dependencies = TRUE)
+# install.packages("gifski", dependencies = TRUE)
 # install.packages("rnetcarto", dependencies = TRUE)
 ```
 
@@ -92,13 +93,14 @@ Zu Beginn müssen alle benötigten Pakete installiert werden. Darunter befinden 
 
 ### 2. Bibliotheken deklarieren
 Die im letzen Schritt installierten Pakete werden nun als Bibliotheken deklariert.
-```{r message=FALSE}
+```{r Libraries, message=FALSE}
 library(igraph)
 library(igraphdata)
 
 library(ggraph)
 library(ggthemes)
 library(gganimate)
+library(GGally)
 library(gifski)
 
 library(tidyverse)
@@ -110,13 +112,13 @@ library(rnetcarto)
 
 ### 3. Alte Daten aus dem Environment enfernen
 Damit keine Konflikte mit alten Daten auftreten, und die Berechnungen möglichst perfomant laufen können, werden alle alten Daten aus dem Environment gelöscht.
-```{r}
+```{r Clean Environment}
 rm(list = ls())
 ```
 
 ### 4. Daten von igraphdata instanziieren
 Nun instanziieren wir die Daten mit dem folgenden Befehl. Es existiert nun ein igraph graph-Objekt "rfid", welches die benötigten Daten beinhaltet. Dieses Objekt bildet die Grunlage für die folgenden Berechnungen.
-```{r}
+```{r Data}
 data("rfid")
 ```
 
@@ -132,19 +134,21 @@ Damit der Netrcarto-Algorithmus die Daten verarbeiten kann müssen diese als Adj
 df.mat=as_adjacency_matrix(df, sparse = F)
 head(df.mat, 1)
 ```
+Wie hier ersichtlich besteht die Matrix aus einem zweidimensionalen Tabelle, wobei die Spalten die verschiedenen Nodes darstellen und die Spalten die Nodes (Hier nur eine Node gezeigt).
+\
+\
 
 ### 7. Simulierter annealing Algorithmus
 Nun kann der Netcarto-Algorithmus angewandt werden. Dieser symuliert ein sogenanntes "annealing" oder auf Deutsch "abkühlen", und sich auf die Art und Weiße bezieht, wie die einzelnen Communities entstehen. Eine gute Analogie ist das Abkühlen von Metall, nachdem es zum glühen gebracht wurden. Zu diesem Zeitpunkt bewegen sich die einzelnen Atome noch sehr schnell - erkennbar an der Hitze- und Lichtemision. Im verlauf des Abkühlprozesses ordnen sich die Atome in einer kristallinen Form an und es wird ein nahezu optimaler Zustand erreicht. Zieht man nun die Verbindungen zu dem Algorithmus würde so wird das Netzwerk in einen ähnlichen Zustand gebracht und es können einzelne Module mit einer Wahrscheinlichkeit von bis zu 90% berechnet werden.
 ```{r}
 rnc=netcarto(df.mat)
-rnc
+head(rnc[[1]], 5)
 ```
 
-### 8. Neues igraph-Objekt mit Index als Spalte erstellen
+### 8. Neues Dataframe mit Index als Spalte erstellen
 Uns liegt nun ein Dataframe mit den zu Beginn definierten Werten vor, welche auf das Modul und die Rolle beinhalten. Leider ist jedoch beim Erstellen der Adjacency-Matrix die Rolle verloren gegangen, da es sich bei der Spalte nicht um nummerische Werte handelt. Daher müssen wir die beiden Dataframes vereinen. Dafür fügen wir dem neu erstellten Dataframe eine Spalte mit dem Index hinzu, um im nächsten Schritt einen merge durchführen zu können. Da diese bei dem ursprünglichen DF "name" heißt, verwenden wir hier die gleiche Bezeichnung.
 ```{r}
 df %>% as_tbl_graph() %>% activate(nodes) %>% mutate(name = row_number()) -> df2
-df2
 ```
 
 ### 9. Status mergen
@@ -153,13 +157,34 @@ Durch das Hinzufügen der Index-Spalte im vorherigen Schritt können wir nun ein
 test <- merge(x = df2 , y = rnc[[1]], by = "name", all = TRUE)
 head(test, 10)
 ```
+Nun liegt ein Dataframe vor, welches alle benötigten Daten beinhaltet und bereit für die Visualisierung ist.
+\
+\
 
 ### 10. Plot
 Der letzte Schritt ist das Plotten mit ggplot. Als y-Werte verwenden wir dem "Within-community Degree", also den Wert, welcher die Vernetzung innerhalb der eigenen Community darstellt. Auf der x-Achse begindet sich
-"Participation Coefficient", bzw. die Vernetzung zu anderen Communities. Der Algorithmus unterscheidet dabei in verschiedene Rollen. Menschen, die weder eine hohe Vernetzung innerhalb ihrer Community noch außerhalb haben werden als 
+"Participation Coefficient", bzw. die Vernetzung zu anderen Communities. Der Algorithmus unterscheidet dabei in verschiedene Rollen. Menschen, die weder eine hohe Vernetzung innerhalb, noch außerhalb ihrer Community haben werden als *"Peripherals"* bezeichnet. *"Connectors"* spielen keine große Roller innerhalb ihrer Community,  sind jedoch sehr gut mit anderen Vernetzt. Des weitern gibt es noch zwei andere Rollen, welche bei diesem Beispiel nicht auftreten. *"Provincial Hubs*" nur in Ihrer Community gut vernetzt und *"Connector Hubs"* vereinen "Connectors" und "Provincial Hubs".
 ```{r warning=FALSE}
-ggplot(test, aes(y = Within-community-Degree, x = Participation-Coefficient)) + 
-  geom_point(aes(color=Status, shape=role, size=module))
+ggplot(test, aes(y = connectivity, x = participation)) + 
+  ggtitle("Community-Struktur RFID-Datensatz") +
+  xlab("Participation Coefficient") +
+  ylab("Within-community Degree") +
+  geom_point(aes(color=Status, shape=role, size=module)) +
+  scale_color_brewer(palette = "Set1")
+```
+
+
+```{r}
+
+net <- df %>% as_tbl_graph()
+net %>% as_tbl_graph() %>% activate(nodes) %>% mutate(name = row_number()) -> net2
+rnc[[1]]
+net2 %>% as_tbl_graph() %>% activate(nodes) %>% mutate(role <- merge(x = net2 , y = rnc[[1]][ , c("name", "module", "role")], by = "name", all = TRUE)) -> net3
+net3 %>% as_tbl_graph() %>% activate(nodes) %>% mutate(role = lapply(role, as.character)) -> net3
+net3 %>% as_tbl_graph() %>% activate(nodes) %>% mutate(role = unlist(role)) -> net3
+
+net3
+ggnet2(net3, mode = "adj", node.color = "Status", palette = "Set1", node.size = "module", shape = "role")
 ```
 
 ### Interpretation der Visualisierungen 
