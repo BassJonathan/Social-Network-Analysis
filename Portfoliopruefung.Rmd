@@ -4,7 +4,6 @@ output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
-# Verändere Titel, Namen & Datum in dem Yaml header am Beginn des files!
 
 # Globale Chunk Optionen:
 knitr::opts_chunk$set(echo = TRUE)
@@ -22,140 +21,144 @@ uP('tidyverse', 'tidygraph', 'ggraph', 'tidylog')
 | __Meta Infos__  |                                            |    
 |-----------------|--------------------------------------------|
 | Student         | Jonathan Baß                               |
-| Titel           | Hier könnte der Titel ihrer Arbeit stehen! |
+| Titel           | Anaylse der sozialen Strukturen einer      |
+|                 | Krankenhausabteilung mit Fokus auf das     |
+|                 | epidemiologische Potential der Rollen      |
 | Kurskontext     | Social Network Analysis                    |
 | Datum           | 18.11.2021                                 |
 | Dozent          | Philipp M. Mendoza, M.Sc.                  |
 
 
 ## Executive Summary 
-_Dies ist die einzige Sektzion die in Bullet points angeführt werden soll._
 * Einleitung
+  + Epidemiologie durch Corona-Pandemie aktueller denn je
+  + Bezug nicht nur auf medizinische Einrichtungen, sondern auch auf das allgemeine Leben
+  + Personen mit vielen Kontakten können als Superspreader fungieren und Krankheiten schnell verbreiten
 * Forschungsfrage
+  + Bestimmung von Berufsgruppen mit besonders hohem Risiko der Krankheitsverbreitung
+  + Einfluss von räumlich gegebenen Trennungen der Personen
+  + Risiko der Rollen bestimmen und soziale Struktur auf Problemstellen überprüfen
 * Datensatz
+  + Erhebung der Daten in geriatrischer Abteilung eines französischen Krankenhauses
+  + Datensatz beinhaltet Begegnungen zwischen Personen auf der Station, sowie deren Rollen
+  + Experiment umfasst 46 Mitarbeiter des Gesundheitswesens, 29 Patienten und insgesamt ca. 14.000 Kontakte
 * Strategie
+  + Abstrakte Betrachtung der Community-Struktur durch Anwendung von Annealing-Algorithmus "Netcarto"
+  + Visualisierung der Ergebnisse mit Fokus auf die Schlüsselwerte "Within-community Degree" und "Participation Coefficient"
+  + Darstellung des Netzwerkes in Kombination mit den Daten aus dem Algorithmus
 * Ergebnisse
+  + Gesundheitspersonal besonders anfällig ein Superspreader zu sein
+  + Verwaltungspersonal darf in den Planungen nicht vernachlässigt werden
+  + Aktive Bildung von Communities durch Aufteilung der Krankenpfleger/innen und Ärzt/innen senkt das Risiko einer großen Verbreitung
+
+\newpage
 
 ## Einleitung und Fragestellung
-Die Analyse und Nachverfolgung von Kontaktdaten ist in der Medizin und Forschung schon lange ein wichtiges Thema, momentan durch die aktuelle Corona-Pandemie jedoch relevanter als je zuvor. Bei engen oder langen Kontakten können Keime und Erreger zwischen den Personen ausgetauscht werden und sich Krankheiten auf diesem Weg verbreiten. Dies stellt im Alltag kein großes Problem dar, da die meisten Erreger harmlos sind und das menschliche Immunsystem den Ausbruch der Krankheit verhindern kann. Dies ist jedoch in Krankenhäusern nicht immer der Fall. Durch die hohe Konzentration an angewendeten Medikamenten wie Antibiotika können sich schnell multiresistente Keime bilden, welche auch Krankenhauskeime genannt werden. Eine detaillierte Beschreibung und Quantifizierung der Kontakte in Krankenhäusern kann deshalb wichtige Informationen für die Epidemiologie von Krankenhausinfektionen sowie für die Konzeption und Validierung von Kontrollmaßnahmen liefern. Wie diese Vorgenommen werden und welche Schlüsse aus der Analyse gezogen werden können wir in dem folgenden Beitrag erläutert.
+Die Analyse und Nachverfolgung von Kontakten ist in der Medizin und Forschung schon lange ein wichtiges und fundamentales Forschungsgebiet (Epidemiologie), wenn es um die Verbreitung von Krankheiten in medizinischen Bereichen wie Krankenhäusern oder Laboren geht. Durch die SARS-CoV-2-Pandemie wurde der Fokus dieses Forschungsbereiches jedoch auch auf das alltägliche Leben erweitert, denn bei engen und/oder langen Kontakten können Keime und Erreger, wie der Corona Virus, zwischen den Personen ausgetauscht werden. Daher ist das Thema und dessen Analyse wichtiger und aktueller denn je. Die folgende Analyse geht von einer Situation ohne akute Pandemie aus. Am Ende werden die Ergebnisse auf die aktuelle Situation übertragen.  
+Es gibt viele Erreger, welche durch Kontakt zwischen Personen übertragen werden, und sich Krankheiten auf diesem Weg verbreiten können. Dies stellt jedoch im Alltag normalerweise kein großes Problem dar, da die meisten Erreger harmlos sind und das menschliche Immunsystem den Ausbruch der Krankheit verhindern kann. Dies ist in Krankenhäusern aber nicht immer der Fall. Durch die hohe Konzentration an angewendeten Medikamenten wie Antibiotika können sich schnell multiresistente Keime bilden, welche auch Krankenhauskeime genannt werden, und nur sehr schwer behandelt werden können. Zudem haben Patienten meist ein geschwächtes Immunsystem. Aus diesem Grund kann eine Infektion mit solchen Erregern tödlich verlaufen. Daher wird in solchen Umgebungen besonders auf die Hygiene geachtet, um eine Verbreitung möglichst zu vermeiden. Eine detaillierte Beschreibung und Quantifizierung der Kontakte in Krankenhäusern kann deshalb wichtige Informationen für die Epidemiologie von Krankenhausinfektionen sowie für die Konzeption und Validierung von Kontrollmaßnahmen liefern. Wie diese Vorgenommen werden, und welche Schlüsse aus der Analyse gezogen werden können, wird in dem folgenden Beitrag erläutert.
 
 ### Thema
-In der geriatrischen Abteilung eines Krankenhauses in Lyon, Frankreich wurde 2010 ein Experiment gemacht. Dafür wurden allen sich auf der Station befindlichen Personen mit tragbare RFID (Radio Frequency Identification) Sensoren ausgerüstet. Diese haben alle Interaktionen im Nahbereich von etwa 1,5m und einer zeitlichen Auflösung von 20 Sekunden über einem Zeitraum von vier Tagen und vier Nächten gemessen. Die Studie umfasste 46 Mitarbeiter des Gesundheitswesens und 29 Patienten und es wurden insgesamt 14.037 Kontakte erfasst.
+In der geriatrischen Abteilung eines Krankenhauses in Lyon, Frankreich, wurde 2010 ein Experiment gemacht. Bei diesem wurden alle sich auf der Station befindlichen Personen mit tragbare RFID (Radio Frequency Identification) Sensoren ausgerüstet, welche alle Interaktionen im Nahbereich von etwa 1,5m und einer zeitlichen Auflösung von 20 Sekunden über einem Zeitraum von vier Tagen und vier Nächten gemessen und aufgezeichnet haben. Die Studie umfasste 46 Mitarbeiter des Gesundheitswesens und 29 Patienten. Dabei wurden insgesamt über 14.000 Kontakte erfasst. Da gerade eine geriatrische Abteilung sehr pflegeintensive Patienten besitzt, welche zudem eine hohe Anfälligkeit haben, eignet sich der Datensatz sehr gut für die angestrebte Analyse.
 
 ### Daten
-Die Daten liegen als ein igraph graph-Objekt vor, welches die graph-Attribute "name" und "Citation", als vertex-Attribut "Status" und als edge-Attribut "Time" besitzt. "Status" beschreibt dabei die Rolle der Person. Dabei wird in Verwaltungspersonal (*ADM*), Ärzte (*MED*), medizinisches Personal wie Krankenschwestern und -Pfleger oder Hilfspersonal (*NUR*) und Patienten/Patientinnen (*PAT*) unterschieden. "Time" ist der Zeitstempel der Sekunde, an dem das 20-Sekunden Intervall ausgelaufen und nicht erneuert wurde.
+Die Daten liegen als ein igraph graph-Objekt vor, welches die graph-Attribute "name" und "Citation", als vertex-Attribut "Status" und als edge-Attribut "Time" besitzt. "Status" beschreibt dabei die Rolle der Person. Dabei wird in Verwaltungspersonal (*ADM*), Ärzte (*MED*), medizinisches Personal wie Krankenschwestern und -Pfleger oder Hilfspersonal (*NUR*) und Patienten/Patientinnen (*PAT*) unterschieden. "Time" ist der Zeitstempel der Sekunde, an dem das 20-Sekunden Intervall ausgelaufen und nicht erneuert wurde. Für die Analyse werden die Zeitstempel nicht weiterverwendet, da von einer direkten Infizierung bei auch schon kurzen Begegnungen ausgegangen wird.
 
 ### Forschungsfrage
-Die Übertragung von Krankheiten kann unter anderem durch persönlichen Kontakt übertragen werden. Personen, die viele Kontakte mit einer Vielzahl an Personen haben, können dabei als Superspreader fungieren und Krankheiten schnell verteilen. **In der folgenden Ausarbeitung beschäftige ich mich mit der Frage, ob gewisse Rollen in Krankenhäusern ein höheres Risiko haben solch ein Superspreader zu sein und ob die durch organisatorische und räumlich gegebene Bildung von Gemeinschaften einen Einfluss auf eine mögliche Verbreitung hat.**
+Die Übertragung von Krankheiten kann unter anderem durch persönlichen Kontakt in Form einer Tröpfchen- oder Schmierinfektion stattfinden. Personen, die viele Kontakte mit einer Vielzahl an Personen haben, können dabei als Superspreader fungieren und Krankheiten schnell verteilen. **In der folgenden Ausarbeitung beschäftige ich mich mit der Frage, ob gewisse Rollen in Krankenhäusern ein höheres Risiko haben solch ein Superspreader zu sein und ob die durch organisatorische und räumlich gegebene Bildung von Gemeinschaften einen Einfluss auf eine mögliche Verbreitung hat.**
 
 ### Relevanz der Forschungsfrage
-Die Kontaktnachverfolgung ist durch die aktuelle Corona-Pandemie ein wichtigeres Thema denn je. Es gilt geschwächte und anfällige Personen zu schützen. Gerade in Krankenhäusern kann eine unkontrollierte Ausbreitung des SARS-CoV-2-Viruses durch einen Superspreader verehrende Auswirkungen haben. Die Analyse und Beantwortung der Forschungsfrage kann bei der Entwicklung eines Schutzkonzeptes helfen und das allgemeine Risiko einer Ansteckung während eines Krankenhausaufenthaltes verringern. Dabei sind gerade Daten aus dieser Abteilung von großem Nutzen, da hier ausschließlich ältere und dadurch risiko-Patienten behandelt werden.
+Die Kontaktnachverfolgung ist durch die aktuelle Corona-Pandemie ein wichtigeres Thema denn je. Es gilt geschwächte und anfällige Personen zu schützen. Gerade in Krankenhäusern kann eine unkontrollierte Ausbreitung des SARS-CoV-2-Viruses durch einen Superspreader verheerende Auswirkungen haben. Die Analyse und Beantwortung der Forschungsfrage kann bei der Entwicklung eines Schutzkonzeptes helfen und das allgemeine Risiko einer Infektion während eines Krankenhausaufenthaltes mit gefährlichen Erregern verringern. Dabei sind gerade Daten aus dieser Abteilung von großem Nutzen, da hier ausschließlich ältere und geschwächte Patienten behandelt werden.
 
 ## Analysestrategie  
-Um die Forschungsfrage korrekt und vollständig beantworten zu können, reicht es nicht aus die reinen Verbindungen zu zählen. Sollte zum Beispiel ein Patient viel Kontakt mit anderen (infizierten) Patienten haben, würde dadurch keine Übertragung und damit auch keine Ausbreitung der Krankheit erfolgen. Aus diesem Grund muss man die Rollen der einzelnen Personen bei der Bewertung des Kontaktes berücksichtigen. Dafür können zwei Werte für jede Node berechnen: Der "Within-community Degree"-Wert (deutsch: Innergemeinschaftlicher Grad) beschreibt die Vernetzung innerhalb der eigenen Community. Dazu wird der "Participation Coefficient" (deutsch: Teilnahmekoeffizient) betrachtet. Dieser beschreibt die Vernetzung einer Person über die Grenzen der eigenen Community heraus. Für jede Node können beide Werte berechnet und auf einem Diagramm als Punkte ausgeplottet werden. Sollte zum Beispiel eine Person eine sehr gute Vernetzung innerhalb der eigenen Community, aber auch zu anderen Communites haben, ist das Risiko bei einer Infektion als Superspreader zu fungierten stark erhöht. Für die Berechnung dieser Schlüselwerte wird der Algorithmus "Netcarto" verwendet. Nectcarto bietet schnelle Netzwerkmodularität und Rollenberechnung durch simuliertes Annealing. Die Ergebnisse werden dann in dem zweiten Teil als Edge-Data dem Netzwerk zugeführt und visualisiert.
+Um die Forschungsfrage korrekt und vollständig beantworten zu können, reicht es nicht aus die reinen Begegnungen zwischen den Personen zu zählen. Sollte zum Beispiel ein infizierter Patient viel Kontakt mit einem anderen infizierten Patienten haben, würde dadurch keine Übertragung und damit auch keine weitere Ausbreitung der Krankheit erfolgen. Aus diesem Grund muss das Verhältnis der Personen zu anderen Personen abstrahiert werden und die Gemeinschaftsstrukturen genauer analysiert werden. Dafür können zwei Werte für jede Node berechnet werden: Der "Within-community Degree"-Wert (deutsch: Innergemeinschaftlicher Grad) beschreibt die Vernetzung innerhalb der eigenen Community. Dazu wird der "Participation Coefficient" (deutsch: Teilnahmekoeffizient) betrachtet. Dieser beschreibt die Vernetzung einer Person über die Grenzen der eigenen Community heraus. Für jede Node können beide Werte berechnet und auf einem Diagramm als Punkte in ein Verhältnis gebracht werden. Sollte zum Beispiel eine Person eine sehr gute Vernetzung innerhalb der eigenen Community, aber auch zu anderen Communites haben, ist das Risiko bei einer Infektion als Superspreader zu fungierten stark erhöht. Für die Berechnung dieser Schlüsselwerte wird der Algorithmus "Netcarto" verwendet. Nectcarto bietet schnelle Netzwerkmodularität- und Rollenberechnungen durch simuliertes Annealing. Die Ergebnisse werden dann in dem zweiten Teil als Edge-Data dem Netzwerk zugeführt und visualisiert.
 
 ### Charakterisierung des Netzwerks
-Der Datensatz bildet die Interaktionen innerhalb der Station über einen Zeitraum von 96 Stunden ab. Die 75 Nodes (Vertecies) bilden die Teilnehmer des Experiments ab. Dabei wird nicht weiter in Patienten oder Angestellte unterschieden. Die Node-Daten beinhalten jeweils den Status bzw. die Rolle der Person, welche im Punkt "Daten" bereits beschrieben sind. Die Edges (Links) repräsentieren die Kontakte der Personen untereinander. Je öfter zwei Personen Kontakt miteinander hatten, desto mehr Edges gibt es zwischen ihnen. Da die Links nur den reinen Kontakt symbolisieren sind sie nicht gerichtet (directed) und zeigen nur, dass ein engerer Kontakt stattgefunden hat. Aus diesem Grund findet auch keine Gewichtung (weighted) statt. Aus diesem Grund können für die reine Analyse alle Schleifen entfernt werden, da bereits ein Kontakt für eine potentielle Übertragung ausreicht. Zudem werden nicht benötigte Daten entfernt und die Berechnungen dadurch schneller. Zusammenfassend lässt sich sagen, dass es sich um ein One-Node-Netzwerk handelt, welches weder eine Richtung noch eine Gewichtung in den Nodes besitzt.
-
+Der Datensatz bildet die Interaktionen innerhalb der Station über einen Zeitraum von 96 Stunden ab. Die 75 Nodes (Vertecies) repräsentieren die Teilnehmer des Experiments und sind alle von dem gleichen Typ. Die Node-Daten beinhalten jeweils den Status bzw. die Rolle der Person, welche im Punkt "Daten" bereits beschrieben sind. Die Edges (Links) repräsentieren die Kontakte der Personen untereinander. Je öfter zwei Personen Kontakt miteinander hatten, desto mehr Edges gibt es zwischen ihnen. Da die Links nur den reinen Kontakt symbolisieren sind sie nicht gerichtet (directed) und zeigen nur, dass ein engerer Kontakt stattgefunden hat. Aus diesem Grund findet auch keine Gewichtung (weighted) der Verbindungen statt. Zudem können für die reine Analyse alle Schleifen entfernt werden, da bereits ein Kontakt für eine potenzielle Übertragung ausreicht. Nicht benötigte Daten werden entfernt, um die Berechnungen zu beschleunigen. Zusammenfassend lässt sich sagen, dass es sich um ein One-Node-Netzwerk handelt, welches weder eine Richtung noch eine Gewichtung in den Nodes besitzt.
+\newpage
 
 ## Umsetzung  
 
 ### Datenmanipulationen
 
 ### Erklärung der Schritte
-Die folgende Auflistung beschreibt die einzelnen Schritte, welche für die Auswertung verwendet wurden. Diese können chronologisch ausgeführt werden, um das gleiche Ergebnis zu erhalten.
+Die folgende Auflistung beschreibt die einzelnen Schritte, welche für die Auswertung verwendet wurden. Diese können chronologisch ausgeführt werden, um zu dem gleichen Ergebnis zu gelangen.
 
 ### 1. Umgebung Vorbereiten
-Zu Beginn müssen alle benötigten Pakete installiert werden. Darunter befinden sich unter anderem "igraphdata", aus welchem wir die Daten laden, standart-Pakete wie "ggraph". Zudem benötigen wir den oben erwähnten Annealing-Algorithmus "rnetcarto".
-```{r Packages}
-# install.packages("igraph", dependencies = T)
-# install.packages("igraphdata", dependencies = T)
-# install.packages("tidygraph", dependencies = T)
-# install.packages("tidyverse", dependencies = T)
-# install.packages("ggraph", dependencies = T)
-# install.packages("GGally", dependencies = T)
-# install.packages("ggthemes", dependencies = TRUE)
-# install.packages("gganimate", dependencies = TRUE)
-# install.packages("gifski", dependencies = TRUE)
-# install.packages("rnetcarto", dependencies = TRUE)
-```
-\
+Zu Beginn müssen alle benötigten Pakete installiert werden. Darunter befinden sich unter anderem "igraphdata", aus welchem die Daten geladen werden und standart-Pakete wie "ggraph" oder „GGally“, welche für die Visualisierungen verwendet werden. Zudem benötigt man den oben erwähnten Annealing-Algorithmus "rnetcarto".
+```{r Packages Install, eval=FALSE}
+install.packages("igraph", dependencies = T)
+install.packages("igraphdata", dependencies = T)
 
-Nun werden die installierten Pakete werden als Bibliotheken deklariert und damit in der Umgebung auch instanziiert. 
+install.packages("tidygraph", dependencies = T)
+install.packages("tidyverse", dependencies = T)
+
+install.packages("ggraph", dependencies = T)
+install.packages("GGally", dependencies = T)
+
+install.packages("RColorBewer", dependencies = T)
+install.packages("rnetcarto", dependencies = T)
+```
+
+Nun werden die installierten Pakete als Bibliotheken deklariert und damit in der Umgebung auch instanziiert.
 ```{r Libraries, message=FALSE}
 library(igraph)
 library(igraphdata)
 
-library(ggraph)
-library(ggthemes)
-library(gganimate)
-library(GGally)
-library(gifski)
-
-library(tidyverse)
 library(tidygraph)
+library(tidyverse)
+
+library(ggraph)
+library(GGally)
 
 library(RColorBrewer)
 library(rnetcarto)
 ```
-\
 
 Damit keine Konflikte mit alten Daten auftreten, und die Berechnungen möglichst performant laufen können, werden alle alten Daten aus dem Environment gelöscht.
 ```{r Clean Environment}
 rm(list = ls())
 ```
-\
-\
+\newpage
 
 ### 2. Daten für den Algorithmus vorbereiten
-Nun instanziieren wir die Daten mit dem folgenden Befehl. Es existiert nun ein igraph graph-Objekt "rfid", welches die benötigten Daten beinhaltet. Dieses Objekt bildet die Grundlage für die folgenden Berechnungen.
+Jetzt instanziieren wir die Daten mit dem folgenden Befehl. Es existiert nun ein igraph graph-Objekt "rfid", welches die benötigten Daten beinhaltet. Dieses Objekt bildet die Grundlage für die folgenden Berechnungen.
 ```{r Data}
 data("rfid")
 ```
-\
 
-Danach werden Schleifen entfernt und direktionale Beziehungen in unidirektionale Beziehungen aufgelöst. Dadurch werden Fehler in den Darstellungen vermieden.
+Folgend werden alle Schleifen entfernt, um Fehler in den Darstellungen zu vermeiden. Die gesäuberten Daten werden in einer neuen Variable abgelegt.
 ```{r Data Cleaning}
 df <- as.undirected(simplify(rfid))
 ```
-\
 
-Damit der Netrcarto-Algorithmus die Daten verarbeiten kann müssen diese als Adjazenzmatrix vorliegen. Der folgende Befehl konvertiert das Dateframe in dieses Format speichert die neue Matrix als Variation der Variable df.
+Damit der Netcarto-Algorithmus die Daten verarbeiten kann müssen diese als Adjazenzmatrix vorliegen. Der folgende Befehl konvertiert das Dateframe in dieses Format und speichert die neue Matrix als Variation der Variable df ab.
 ```{r To Adjacency-Matrix}
 df.mat=as_adjacency_matrix(df, sparse = F)
-head(df.mat, 1)
 ```
-Wie hier ersichtlich besteht die Matrix aus einer zweidimensionalen Tabelle, wobei die Spalten die verschiedenen Nodes darstellen und die Spalten die Nodes (Hier nur eine Node gezeigt).
-\
-\
 
 ### 3. Simulierter annealing Algorithmus
-Nun kann der Netcarto-Algorithmus angewandt werden. Dieser simuliert ein sogenanntes "annealing" oder auf Deutsch "abkühlen", und sich auf die Art und Weiße bezieht, wie die einzelnen Communities entstehen. Eine gute Analogie ist das Abkühlen von Metall, nachdem es zum Glühen gebracht wurden. Zu diesem Zeitpunkt bewegen sich die einzelnen Atome noch sehr schnell - erkennbar an der Hitze- und Licht-Emission. Im Verlauf des Abkühlprozesses ordnen sich die Atome in einer kristallinen Form an und es wird ein nahezu optimaler Zustand erreicht. Zieht man nun die Verbindungen zu dem Algorithmus würde so wird das Netzwerk in einen ähnlichen Zustand gebracht und es können einzelne Module mit einer Wahrscheinlichkeit von bis zu 90% berechnet werden.
+Nun kann der Netcarto-Algorithmus angewandt werden. Dieser simuliert ein sogenanntes "annealing" oder auf Deutsch "abkühlen", was sich auf die Art und Weiße bezieht, wie die einzelnen Communities berechnet werden. Eine gute Analogie ist das Abkühlen von Metall, nachdem es zum Glühen gebracht wurde. Zu diesem Zeitpunkt bewegen sich die einzelnen Atome noch sehr schnell, da sie ein hohes Energiepotential besitzen. Im Verlauf des Abkühlprozesses ordnen sich die Atome in einer kristallinen Form an und es wird ein nahezu optimaler Zustand erreicht. Energiereichere Atome benötigen für diesen Prozess länger. Zieht man nun die Verbindungen zu dem Algorithmus, so wird das Netzwerk in einen ähnlichen Zustand gebracht und es können einzelne Module mit einer Wahrscheinlichkeit von bis zu 90% berechnet werden. Dabei ist die Anzahl der Kontakte das Energiepotential.
 ```{r Simulated Annealing Algorithm}
 rnc=netcarto(df.mat)
 head(rnc[[1]], 5)
 ```
-\
-\
+\newpage
 
 ### 4. Daten für den ersten Plot vorbereiten
-Es liegt nun ein Dataframe mit den zu Beginn definierten Werten vor, welche auf das Modul und die Rolle beinhalten. Leider ist jedoch beim Erstellen der Adjacency-Matrix die Rolle verloren gegangen, da es sich bei der Spalte nicht um nummerische Werte handelt. Daher müssen die beiden Dataframes vereint werden. Dafür wird dem neu erstellten Dataframe eine Spalte mit dem Index hinzugefügt, um im nächsten Schritt einen merge durchführen zu können. Da diese bei dem ursprünglichen DF "name" heißt, wurde hier die gleiche Bezeichnung verwendet.
+Es liegt nun ein Dataframe mit den zu Beginn definierten Werten vor, welches auch das Modul beinhaltet. Leider ist jedoch beim Erstellen der Adjacency-Matrix die Rolle verloren gegangen, da es sich bei der Spalte um nicht-nummerische Werte handelt. Daher müssen die beiden Dataframes vereint werden. Dafür wird dem neu erstellten Dataframe eine Spalte mit dem Index hinzugefügt, um im nächsten Schritt einen merge durchführen zu können. Da diese Spalte bei dem ursprünglichen DF "name" heißt, wurde hier die gleiche Bezeichnung verwendet.
 ```{r Add Name}
 df2 <- df %>% as_tbl_graph() %>% activate(nodes) %>% mutate(name = row_number())
-df2
 ```
-\
 
-Durch das Hinzufügen der Index-Spalte kann nun einen Merge durchgeführt werden. Das Dataframe "dfPlot" beinhaltet jetzt alle benötigten Werten, welche für die Auswertung relevant sind und kann in einem Plot visualisiert werden.
+Durch das Hinzufügen der Index-Spalte kann nun ein Merge durchgeführt werden. Das Dataframe "dfPlot" beinhaltet jetzt alle benötigten Werte, welche für die Auswertungen relevant sind und kann in einem Diagramm visualisiert werden.
 ```{r Add role to Algorithm-Output}
 dfPlot <- merge(x = df2 , y = rnc[[1]], by = "name", all = TRUE)
 head(dfPlot, 10)
 ```
-\
-\
+\newpage
 
 ### 5. Plot #1
-Der letzte Schritt ist das Plotten mit ggplot. Als y-Wertewird der "Within-community Degree", also den Wert, welcher die Vernetzung innerhalb der eigenen Community darstellt. Auf der x-Achse begindet sich "Participation Coefficient", bzw. die Vernetzung zu anderen Communities. Der Algorithmus unterscheidet dabei in verschiedene Rollen. Menschen, die weder eine hohe Vernetzung innerhalb noch außerhalb ihrer Community haben werden als *"Peripherals"* bezeichnet. *"Connectors"* spielen keine große Rolle innerhalb ihrer Community, sind jedoch sehr gut mit anderen Vernetzt. Des Weiteren gibt es noch zwei andere Rollen, welche bei diesem Beispiel nicht auftreten. *"Provincial Hubs*" nur in Ihrer Community gut vernetzt und *"Connector Hubs"* vereinen "Connectors" und "Provincial Hubs".
+Der nächste Schritt ist das Plotten mit ggplot. Als y-Wert wird der "Within-community Degree", also der Wert, welcher die Vernetzung innerhalb der eigenen Community darstellt. Auf der x-Achse begindet sich "Participation Coefficient", bzw. die Vernetzung zu anderen Communities. Der Algorithmus unterscheidet dabei in verschiedene Rollen. Menschen, die weder eine hohe Vernetzung innerhalb noch außerhalb ihrer Community haben werden als *"Peripherals"* bezeichnet. *"Connectors"* spielen keine große Rolle innerhalb ihrer Community, sind jedoch sehr gut mit anderen Vernetzt. Des Weiteren gibt es noch zwei andere Rollen, welche bei diesem Beispiel jedoch nicht auftreten. *"Provincial Hubs*" sind zum Beispiel nur in Ihrer Community gut vernetzt und *"Connector Hubs"* vereinen "Connectors" und "Provincial Hubs".
 ```{r warning=FALSE}
 ggplot(dfPlot, aes(y = connectivity, x = participation)) + 
   ggtitle("Einordung der Personen nach Connections") +
@@ -164,43 +167,38 @@ ggplot(dfPlot, aes(y = connectivity, x = participation)) +
   geom_point(aes(color=Status, shape=role, size=module)) +
   scale_color_brewer(palette = "Set1")
 ```
-\
-\
+\newpage
 
 ### 6. Vorbereitung Kombination
-Die vom Algorithmus berechneten Daten können nun mit dem Netzwerk kombiniert und in einer Visualisierung dargestellt werden. Dafür werden die gesäuberten und mit der Spalte "name" versehenen Daten aus Schritt 4 verwendet und mit den Edge-Daten kombiniert. Dafür werden die Spalten "modul" und "role" aus dem Algorithmus-Output erstellt und mit Werten befüllt. Da sich die Werte von "role" im "orderd factor"-Format vorliegen müssen wir diese erst zu Zeichen konvertieren, um in der Visualisierung verwendbar zu sein.
+Die vom Algorithmus berechneten Daten können nun mit dem Netzwerk kombiniert und in einer Visualisierung dargestellt werden. Dafür werden die gesäuberten und mit der Spalte "name" versehenen Daten aus Schritt 4 verwendet und mit den Edge-Daten kombiniert. Die Spalten "modul" und "role" werden aus dem Algorithmus-Output erstellt und mit Werten befüllt. Da sich die Werte von "role" im "orderd factor"-Format vorliegen müssen diese erst zu Zeichen konvertieren werden, um in der Visualisierung verwendbar zu sein.
 ```{r }
 netPlot <- df2 %>% activate(nodes) %>% mutate(role <- merge(x = df2 , y = rnc[[1]][ , c("name", "module", "role")], by = "name", all = TRUE))
 netPlot <- netPlot %>% as_tbl_graph() %>% activate(nodes) %>% mutate(role = unlist(lapply(role, as.character)))
 ```
-\
-\
 
 ### 7. Plot #2
-Für den Plot des Netzwerks wird ggnet2 verwendet. Aus Gründen der Lesbarkeit und Vergleichbarkeit werden dieselben Visualisierungs-Eigenschaften verwendet, wie in dem ersten Plot. Lediglich die Module wurden mit Labels zusätzlich visualisiert, da diese im Fokus stehen. Die Verteilung der Edges wird über den Modus "adj" realisiert, welcher auf der Adjazenzmatrix des Datensatzes basiert.
+Für den Plot des Netzwerks wird ggnet2 verwendet. Aus Gründen der Lesbarkeit und Vergleichbarkeit werden dieselben Visualisierungs-Eigenschaften verwendet, wie in dem ersten Plot. Lediglich die Module wurden zusätzlich mit Labels visualisiert, da diese im Fokus stehen. Die Verteilung der Edges wird über den Modus "adj" realisiert, welcher auf der Adjazenzmatrix des Datensatzes basiert.
 ```{r warning=FALSE}
 ggnet2(netPlot, mode = "adj", label = "module", node.size = "module", palette = "Set1", node.color = "Status", shape = "role") +
   ggtitle("Community-Struktur mit Modulen und Rollen")
 ```
-\
-\
+\newpage
 
 ### Interpretation der Visualisierungen 
-Zu Beginn wird die erste Visualisierung betrachtet. Hier ist klar zu sehen, dass es deutlich mehr „Connectors“ als „Peripherals“ gibt. Gerade Krankenschwestern weißen sehr viele Begegnungen sowohl innerhalb als auch außerhalt ihres Netzwerks auf, welches auch auf Ärzte zutrifft. Diese haben allgemein viele Kontakte und sind bis auf zwei als „Peripherals“ spezifiziert. Erstaunlicherweise haben auch einige Verwaltungsangestellte viele verschiedene Kontakte. Der „Within-community Degree“ ist bei Patienten allgemein nicht sehr hoch und kommt nur sehr selten über 0. Dies lässt auf eher kleine Patientenzimmer schließen, welche nicht viele Betten haben. Die meisten Patienten werden jedoch mobil und nicht an das Bett gebunden sein. Es gibt bei den Daten auch Ausreiser. Eine Krankenschwester schein fast ausschließlich Kontakt innerhalb ihrer Community gehabt zu haben. Aus dieser Darstellung lässt sich schließen, dass das Größte Risiko ein Superspreader zu sein von den Krankenschwestern, den Ärzten, aber auch den Verwaltungsangestellten ausgeht. Diese Gruppen haben alle viele auch Community-übergreifende Kontakte. Diese These lässt sich auch durch die zweite Visualisierung bestätigen. Aus dem Netzwerk lässt sich klar erkennen, dass es keine zentralen Knotenpunkte gibt, sondern eine allgemein hohe Anzahl an Verknüpfungen auch zwischen den einzelnen Modulen gibt. Hier wird jedoch ersichtlich, dass die Ärzte fast exklusiv ein eigenes Modul bilden. Daraus lässt sich schließen, dass diese auch untereinander viel Kontakt haben. Die Patienten und Krankenschwestern verteilen sich größtenteils über drei Module. Im Gegensatz dazu stehen die Verwaltungsangestellten, welche nur in zwei Modulen auftreten.
-\
-\
+Zu Beginn wird die erste Visualisierung betrachtet. Hier ist klar zu sehen, dass es deutlich mehr „Connectors“ als „Peripherals“ gibt. Gerade Krankenschwestern weißen vergleichsweise sehr viele Begegnungen sowohl innerhalb als auch außerhalt ihres Netzwerks auf, was auch auf Ärzte zutrifft. Diese Berufsgruppen haben allgemein viele Kontakte und sind bis auf zwei als „Peripherals“ spezifiziert. Erstaunlicherweise haben auch einige Verwaltungsangestellte viele verschiedene Kontakte. Der „Within-community Degree“ ist bei Patienten allgemein nicht hoch und kommt nur sehr selten über 0. Dies lässt auf eher kleine Patientenzimmer schließen, welche nicht viele Betten haben. Die meisten Patienten werden jedoch mobil, und nicht an das Bett gebunden sein. Es gibt auch Ausreißer in den Daten. Eine Krankenschwester schein fast ausschließlich Kontakt innerhalb ihrer Community gehabt zu haben. Aus dieser Darstellung lässt sich schließen, dass das Größte Risiko ein Superspreader zu sein, von den Krankenschwestern, den Ärzten, aber auch den Verwaltungsangestellten ausgeht. Diese Gruppen haben alle viele auch Community-übergreifende Kontakte. Diese These lässt sich auch durch die zweite Visualisierung bestätigen. In dem Netzwerk kann man klar erkennen, dass es keine zentralen Knotenpunkte gibt, sondern eine allgemein hohe Anzahl an Verknüpfungen auch zwischen den einzelnen Modulen besteht. Hier wird jedoch ersichtlich, dass die Ärzte fast exklusiv ein eigenes Modul bilden. Daraus lässt sich schließen, dass diese auch untereinander viel Kontakt, wie zum Beispiel Besprechungen, haben. Die Patient*innen und Krankenschwestern sowie -pfleger verteilen sich größtenteils über drei Module. Im Gegensatz dazu stehen die Verwaltungsangestellten, welche nur in zwei Modulen auftreten.
+\newpage
 
 ## Conclusio
 
 ### Wiederholung der Fragestellung
-Zu Beginn wurde die Frage gestellt, ob gewisse Rollen in Krankenhäusern ein höheres Risiko haben solch ein Superspreader zu sein und ob die durch organisatorische und räumlich gegebene Bildung von Gemeinschaften einen Einfluss auf eine mögliche Verbreitung hat. Für die Beantwortung wurden zwei Visualisierungen erstellt: Die erste ordnet die einzelnen Personen in Bezug auf ihre Kontakte innerhalb und außerhalb ihrer Community ein. Die zweite zeigt das Netzwerk zusammen mit den errechneten Werten. Wertet man beide in Kombination aus können die folgenden Schlüsse gezogen werden.
-\
-\
+Zu Beginn wurde die Frage gestellt, ob gewisse Rollen in Krankenhäusern ein höheres Risiko haben als ein Superspreader zu fungieren und ob die durch organisatorische und räumlich gegebene Bildung von Gemeinschaften einen Einfluss auf eine mögliche Verbreitung hat. Für die Beantwortung wurden zwei Visualisierungen erstellt: Das erste Diagramm ordnet die einzelnen Personen in Bezug auf ihre Kontakte innerhalb und außerhalb ihrer Community ein. Der zweite Plot zeigt das Netzwerk zusammen mit den errechneten Werten. Wertet man beide in Kombination aus können die folgenden Schlüsse gezogen werden.
 
 ### Zusammenfassung der zentralen Ergebnisse
-Krankenschwestern haben das größte Risiko bei einer nicht entdeckten Infektion als Superspreader zu fungieren. Sie sind besonders gut Community-übergreifend vernetzt und können deshalb zu einer schnellen Verbreitung der Krankheit beitragen. Dieses Ergebnis darf jedoch nicht pauschalisiert werden, da es auch Schwestern gibt, deren Kontakte auf eine Community fokussiert sind. Das Gleiche gilt auch für Ärzte. Durch ihre Tätigkeit haben Sie automatisch viel Kontakt mit allen möglichen Personen. Ein eher unerwartetes Ergebnis stellen die Verwaltungsangestellten dar. Auch sie haben teilweise ein sehr hohes Potential. Ein wichtiges Takeaway wäre daher diese bei Schutzkonzepten nicht zu übergehen. Die Patienten sind größtenteils außerhalb von ihren Gruppen vernetzt. Dadurch haben sie zwar auch das Potential einen Erreger von einem Modul in ein anderes zu übertragen, jedoch ein eher geringes Risiko der Übertragung innerhalb ihrer Community. Daraus lässt sich schließen, dass Personen wie Ärzte und Krankenschwerstern die Hauptrollen in dem Communites spielen. Wenn diese Personen, zusammen mit den Angestellten der Verwaltung sich und die Patienten schützen kann eine Übertragung verhindert und die Patienten geschützt werden. Eine weiter Möglichkeit wäre eine genaue Einteilung der Krankenschwestern auf bestimmte Zimmer. Dadurch würde sich der "Within-community Degree" deutlich erhöhen der "Participatin Coefficient" senken. Durch diese Strukturellen Veränderungen würde eine Infektion nur eine Community affektieren und auch das Risiko der Ausbreitung zwischen den Modulen einschränken. Das Stichwort für ein möglichst geringes Risiko lautet deshalb "Communitybildung".
+Krankenschwestern und Krankenpfleger haben das größte Risiko bei einer nicht entdeckten Infektion als Superspreader zu fungieren. Sie sind besonders gut Community-übergreifend vernetzt und können deshalb zu einer schnellen Verbreitung einer Krankheit beitragen. Dieses Ergebnis darf jedoch nicht pauschalisiert werden, da es auch Pflegepersonal gibt, deren Kontakte auf eine Community fokussiert sind. Das Gleiche gilt auch für Ärzt/innen. Durch ihre Tätigkeit haben Sie automatisch viel Kontakt mit anderen Personen. Hervorzuheben sind hier jedoch auch die Kontakte, welche innerhalb dieser Berufsgruppe stattfinden. Diese müssten im Extremfall unter besonderen Schutz abgehalten werden. Ein eher unerwartetes Ergebnis stellen die Verwaltungsangestellten dar. Auch sie haben teilweise ein sehr hohes epidemiologisches Potential. Ein wichtiges Takeaway wäre daher diese bei Schutzkonzepten nicht zu übergehen, sondern aktiv mit in die Planung und Risikoanalyse einzubeziehen. Die Patienten sind größtenteils außerhalb von ihren Gruppen vernetzt. Dadurch haben sie zwar auch das Potential einen Erreger von einem Modul in ein anderes zu übertragen, jedoch ein eher geringes Risiko der Übertragung innerhalb ihrer Community. Daraus lässt sich schließen, dass Personen wie Ärzte und Pfleger*innen die Hauptrollen in dem Communites spielen. Wenn diese Personen, zusammen mit den Angestellten der Verwaltung sich und die Patienten schützen kann eine Übertragung verhindert und die Patienten geschützt werden. Eine weitere Möglichkeit wäre eine genaue Einteilung des Pflegepersonals auf bestimmte Zimmer. Dadurch würde sich der "Within-community Degree" deutlich erhöhen und der "Participatin Coefficient" gesenkt werden. Durch diese Strukturellen Veränderungen würde eine Infektion nur eine Community affektieren und auch das Risiko der Ausbreitung zwischen den Modulen einschränken. <br>
+Die Anwendung der genannten Maßnahmen kann das Risiko einer Verbreitung von gefährlichen Erregern in einem Krankenhaus deutlich verringern. Die in der Forschungsfrage beschriebene räumliche Trennung hat in dem Datensatz zu keiner deutlich sichtbaren Spaltung der Kontaktgruppen beigetragen. Es kann jedoch die Fragestellung hinsichtlich der Rollen definitiv beantwortet werden. Der nächste Schritt wäre ein Experiment mit den beschriebenen Maßnahmen und ein darauffolgender Vergleich der Datensätze. <br>
+Zusammenfassend kann die Analyse erfolgreich abgeschlossen werden.
 
 
-#### Limitationen, weiterführende Kommentare
-Obwohl die Daten unter realen Bedingungen gesammelt wurden lässt sich der Datensatz nur bedingt auf eine Situation wie die aktuelle SARS-CoV-2-Pandemie übertragen, da durch die gegebenen Regelungen eine wesentlich striktere Trennung der Patienten und der Angestellten vorgenommen wird, sowie ein höherer Schutz durch das Tragen von Masken oder Schutzkleidung gegeben ist. Die Ergebnisse dürfen jedoch nicht ganz vernachlässigt werden, denn sie geben Aufschluss über die sozialen Strukturen hinter der Abteilung in einem "normalen" Zustand beschreibt. Durch die Ergebnisse kann gerade zu Beginn einer Infektionswelle die Ausbreitungsgeschwindigkeit durch Strukturelle Änderungen gebremst werden.
+*Limitationen, weiterführende Kommentare*  
+Obwohl die Daten unter realen Bedingungen gesammelt wurden, lässt sich der Datensatz nur bedingt auf eine Situation wie die aktuelle SARS-CoV-2-Pandemie übertragen, da durch die gegebenen Regelungen eine wesentlich striktere Trennung der Patienten und der Angestellten vorgenommen wird, sowie ein höherer Schutz durch das Tragen von Masken oder Schutzkleidung gegeben ist. Durch die Ergebnisse kann aber gerade zu Beginn einer Infektionswelle die Ausbreitungsgeschwindigkeit durch Strukturelle Änderungen gebremst werden.
 
