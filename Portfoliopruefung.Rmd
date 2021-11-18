@@ -87,86 +87,125 @@ Die folgende Auflistung beschreibt die einzelnen Schritte, welche für die Auswe
 ### 1. Umgebung Vorbereiten
 Zu Beginn müssen alle benötigten Pakete installiert werden. Darunter befinden sich unter anderem "igraphdata", aus welchem die Daten geladen werden und standart-Pakete wie "ggraph" oder „GGally“, welche für die Visualisierungen verwendet werden. Zudem benötigt man den oben erwähnten Annealing-Algorithmus "rnetcarto". Für die Installationsverwaltung der Pakete wird die folgende Funktion verwendet. Diese Prüft, ob alle in der Liste "uP" definierten Paktete installiert sind und führt die Installations-Anweisung nur noch für die fehlenden Pakete durch. Zudem werden die Pakete auch gleich als Bibliotheken deklariert und damit in der Umgebung auch instanziiert.
 ```{r Packages Install, message=FALSE}
-dP<- function(...){
-  x <- list(...)
-  for(i in x) {
-    if (!is.element(i, installed.packages()[,1])) {
-      install.packages(p, dep = TRUE, repos = "http://cran.wu.ac.at")
+dP<- function(...){ # Funktion deklarieren
+  x <- list(...) # Liste erstellen
+  for(i in x) { # Iteration über Liste
+    if (!is.element(i, installed.packages()[,1])) { # Prüfung, ob Paket installiert ist
+      install.packages(p, dep = TRUE, repos = "http://cran.wu.ac.at") # Installation Paket
     }
-    library(i, character.only = TRUE)
+    library(i, character.only = TRUE) # Deklaration aller Pakete als Bibliotheken
   }
 }
 
-dP('igraph', 'igraphdata', 'tidygraph', 'tidyverse', 'ggraph', 'GGally', 'RColorBrewer', 'rnetcarto')
+# Liste der Pakete
+dP('igraph', 'igraphdata', 'tidygraph', 'tidyverse', 
+   'ggraph', 'GGally', 'RColorBrewer', 'rnetcarto') 
 ```
 
 Damit keine Konflikte mit alten Daten auftreten und die Berechnungen möglichst performant laufen können, werden alle alten Daten aus dem Environment gelöscht.
 ```{r Clean Environment}
-rm(list = ls())
+rm(list = ls()) # Environment säubern
 ```
 \newpage
 
 ### 2. Daten für den Algorithmus vorbereiten
 Jetzt instanziieren wir die Daten mit dem folgenden Befehl. Es existiert nun ein igraph graph-Objekt "rfid", welches die benötigten Daten beinhaltet. Dieses Objekt bildet die Grundlage für die folgenden Berechnungen.
 ```{r Data}
-data("rfid")
+data("rfid") # Daten laden
 ```
 
 Folgend werden alle Schleifen entfernt, um Fehler in den Darstellungen zu vermeiden. Die gesäuberten Daten werden in einer neuen Variable abgelegt.
 ```{r Data Cleaning}
-df <- as.undirected(simplify(rfid))
+df <- as.undirected( # Neues Dataframe mit unidirektionalen Daten
+  simplify(rfid) # Schleifen entfernen
+  ) 
 ```
 
 Damit der Netcarto-Algorithmus die Daten verarbeiten kann, müssen diese als Adjazenzmatrix vorliegen. Der folgende Befehl konvertiert das Dateframe in dieses Format und speichert die neue Matrix als Variation der Variable df ab.
 ```{r To Adjacency-Matrix}
-df.mat=as_adjacency_matrix(df, sparse = F)
+df.mat=as_adjacency_matrix(df, sparse = F) # Daten zu adjacency-Matrix konvertieren
 ```
 
 ### 3. Simulierter annealing Algorithmus
 Nun kann der Netcarto-Algorithmus angewandt werden. Dieser simuliert ein sogenanntes "annealing" oder auf Deutsch "abkühlen", was sich auf die Art und Weiße bezieht, wie die einzelnen Communities berechnet werden. Eine gute Analogie ist das Abkühlen von Metall, nachdem es zum Glühen gebracht wurde. Zu diesem Zeitpunkt bewegen sich die einzelnen Atome noch sehr schnell, da sie ein hohes Energiepotential besitzen. Im Verlauf des Abkühlprozesses ordnen sich die Atome in einer kristallinen Form an und es wird ein nahezu optimaler Zustand erreicht. Energiereichere Atome benötigen für diesen Prozess länger. Zieht man nun die Verbindungen zu dem Algorithmus, so wird das Netzwerk in einen ähnlichen Zustand gebracht und es können einzelne Module mit einer Wahrscheinlichkeit von bis zu 90% berechnet werden. Dabei ist die Anzahl der Kontakte das Energiepotential.
 ```{r Simulated Annealing Algorithm}
-rnc=netcarto(df.mat)
-head(rnc[[1]], 5)
+rnc=netcarto(df.mat) # Annealing-Algorithmus anwenden
+head(rnc[[1]], 5) # Output der ersten fünf Zeilen
 ```
 \newpage
 
 ### 4. Daten für den ersten Plot vorbereiten
 Es liegt nun ein Dataframe mit den zu Beginn definierten Werten vor, welches auch das Modul beinhaltet. Leider ist jedoch beim Erstellen der Adjacency-Matrix die Rolle verloren gegangen, da es sich bei der Spalte um nicht-nummerische Werte handelt. Daher müssen die beiden Dataframes vereint werden. Dafür wird dem neu erstellten Dataframe eine Spalte mit dem Index hinzugefügt, um im nächsten Schritt einen merge durchführen zu können. Da diese Spalte bei dem ursprünglichen DF "name" heißt, wurde hier die gleiche Bezeichnung verwendet.
 ```{r Add Name}
-df2 <- df %>% as_tbl_graph() %>% activate(nodes) %>% mutate(name = row_number())
+df2 <- df %>% # Neues Dataframe erstellen
+  as_tbl_graph() %>% # Zu tbl-graph konvertieren
+  activate(nodes) %>% # Nodes aktivieren
+  mutate(name = row_number()) # Spalte mit Zeilen-Index hinzufügen
 ```
 
 Durch das Hinzufügen der Index-Spalte kann nun ein Merge durchgeführt werden. Das Dataframe "dfPlot" beinhaltet jetzt alle benötigten Werte, welche für die Auswertungen relevant sind und kann in einem Diagramm visualisiert werden.
 ```{r Add role to Algorithm-Output}
-dfPlot <- merge(x = df2 , y = rnc[[1]], by = "name", all = TRUE)
-head(dfPlot, 10)
+dfPlot <- merge( #Neues Dataframe erstellen und mergen
+  x = df2 , # Quellwerte
+  y = rnc[[1]], # Zielwerte
+  by = "name", # Merge-Bedingung
+  all = TRUE # Merge by all
+  ) 
+
+head(dfPlot, 10) # Output der ersten zehn Zeilen
 ```
 \newpage
 
 ### 5. Plot #1
 Der nächste Schritt ist das Plotten mit ggplot. Als y-Wert wird der "Within-community Degree" genommen, also der Wert, welcher die Vernetzung innerhalb der eigenen Community darstellt. Auf der x-Achse begindet sich "Participation Coefficient" bzw. die Vernetzung zu anderen Communities. Der Algorithmus unterscheidet dabei in verschiedene Rollen. Menschen, die weder eine hohe Vernetzung innerhalb noch außerhalb ihrer Community haben werden als *"Peripherals"* bezeichnet. *"Connectors"* spielen keine große Rolle innerhalb ihrer Community. Sie sind jedoch sehr gut mit anderen Vernetzt. Des Weiteren gibt es noch zwei andere Rollen, welche bei diesem Beispiel jedoch nicht auftreten. *"Provincial Hubs*" sind zum Beispiel nur in Ihrer Community gut vernetzt und *"Connector Hubs"* vereinen "Connectors" und "Provincial Hubs".
 ```{r First plot, warning=FALSE}
-ggplot(dfPlot, aes(y = connectivity, x = participation)) + 
-  ggtitle("Einordung der Personen nach Connections") +
-  xlab("Participation Coefficient") +
-  ylab("Within-community Degree") +
-  geom_point(aes(color=Status, shape=role, size=module)) +
-  scale_color_brewer(palette = "Set1")
+ggplot(dfPlot, # ggplot und Daten zuweisen
+       aes(y = connectivity, # Mapping der y-Achse
+           x = participation # Mapping der x-Achse
+           )) + 
+  ggtitle("Einordung der Personen nach Connections") + # Titel hinzufügen
+  xlab("Participation Coefficient") + # x-Achsenbeschriftung
+  ylab("Within-community Degree") + # y-Achsenbeschriftung
+  geom_point(aes( # Aussehen der Punkte definieren
+    color=Status, # Farbe dem Status zuweisen
+    shape=role, # Form der Rolle zuweisen
+    size=module # Größe dem Modul zuweisen
+    )) + 
+  scale_color_brewer(palette = "Set1") # Farbschema festlegen
 ```
 \newpage
 
 ### 6. Vorbereitung Kombination
 Die vom Algorithmus berechneten Daten können nun mit dem Netzwerk kombiniert und in einer Visualisierung dargestellt werden. Dafür werden die gesäuberten und mit der Spalte "name" versehenen Daten aus Schritt 4 verwendet und mit den Edge-Daten kombiniert. Die Spalten "modul" und "role" werden aus dem Algorithmus-Output erstellt und mit Werten befüllt. Da sich die Werte von "role" im "orderd factor"-Format vorliegen, müssen diese erst zu Zeichen konvertieren werden, um in der Visualisierung verwendbar zu sein.
-```{r Combine data}
-netPlot <- df2 %>% activate(nodes) %>% mutate(role <- merge(x = df2 , y = rnc[[1]][ , c("name", "module", "role")], by = "name", all = TRUE))
-netPlot <- netPlot %>% as_tbl_graph() %>% activate(nodes) %>% mutate(role = unlist(lapply(role, as.character)))
+```{r Combine data, tidy = FALSE}
+netPlot <- df2 %>% # Neues Dataframe für Plot
+  activate(nodes) %>% # Nodes für Bearbeitung aktivieren
+  mutate(role <- merge( # Merge der Ergebnisse mit den Node-Daten des Netzwerkes
+    x = df2, # Zielwerte definieren
+    y = rnc[[1]][ , c("name", "module", "role")], # Definierte Spalten als Quellen
+    by = "name", # Merge-Wert definieren
+    all = TRUE # Merge by all
+    )) 
+
+
+netPlot <- netPlot %>% # Dataframe bearbeiten
+  as_tbl_graph() %>% # Zu tbl-graph konvertieren
+  activate(nodes) %>% # Nodes für Bearbeitung aktivieren
+  mutate(role = unlist(lapply(role, as.character))) # Format der Rollen konvertieren
 ```
+\newpage
 
 ### 7. Plot #2
 Für den Plot des Netzwerks wird ggnet2 verwendet. Aus Gründen der Lesbarkeit und Vergleichbarkeit werden dieselben Visualisierungs-Eigenschaften verwendet wie in dem ersten Plot. Lediglich die Module wurden zusätzlich mit Labels visualisiert, da diese im Fokus stehen. Die Verteilung der Edges wird über den Modus "adj" realisiert, welcher auf der Adjazenzmatrix des Datensatzes basiert.
 ```{r Second plot, warning=FALSE}
-ggnet2(netPlot, mode = "adj", label = "module", node.size = "module", palette = "Set1", node.color = "Status", shape = "role") +
-  ggtitle("Community-Struktur mit Modulen und Rollen")
+ggnet2(netPlot, # ggnet2 die Daten zuweisen
+       mode = "adj", # Verteilung der Nodes nach adjacency-Matrix
+       label = "module", # Label definieren
+       node.size = "module", # Node-Größe den Modulen zuweisen
+       palette = "Set1",  # Farbpalette festlegen
+       node.color = "Status", # Node-Farbe dem Status zuweisen
+       shape = "role") + # Node-Form den Rollen zuweisen
+  ggtitle("Community-Struktur mit Modulen und Rollen")  # Titel hinzufügen
 ```
 \newpage
 
