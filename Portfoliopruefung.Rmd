@@ -16,6 +16,7 @@ uP <- function(...) {
     library(p, character.only = TRUE)}
 }
 uP('tidyverse', 'tidygraph', 'ggraph', 'tidylog')
+
 ```
 
 | __Meta Infos__  |                                            |    
@@ -84,34 +85,19 @@ Der Datensatz bildet die Interaktionen innerhalb der Station über einen Zeitrau
 Die folgende Auflistung beschreibt die einzelnen Schritte, welche für die Auswertung verwendet wurden. Diese können chronologisch ausgeführt werden, um zu dem gleichen Ergebnis zu gelangen.
 
 ### 1. Umgebung Vorbereiten
-Zu Beginn müssen alle benötigten Pakete installiert werden. Darunter befinden sich unter anderem "igraphdata", aus welchem die Daten geladen werden und standart-Pakete wie "ggraph" oder „GGally“, welche für die Visualisierungen verwendet werden. Zudem benötigt man den oben erwähnten Annealing-Algorithmus "rnetcarto".
-```{r Packages Install, eval=FALSE}
-install.packages("igraph", dependencies = T)
-install.packages("igraphdata", dependencies = T)
+Zu Beginn müssen alle benötigten Pakete installiert werden. Darunter befinden sich unter anderem "igraphdata", aus welchem die Daten geladen werden und standart-Pakete wie "ggraph" oder „GGally“, welche für die Visualisierungen verwendet werden. Zudem benötigt man den oben erwähnten Annealing-Algorithmus "rnetcarto". Für die Installationsverwaltung der Pakete wird die folgende Funktion verwendet. Diese Prüft, ob alle in der Liste "uP" definierten Paktete installiert sind und führt die Installations-Anweisung nur noch für die fehlenden Pakete durch. Zudem werden die Pakete auch gleich als Bibliotheken deklariert und damit in der Umgebung auch instanziiert.
+```{r Packages Install, message=FALSE}
+dP<- function(...){
+  x <- list(...)
+  for(i in x) {
+    if (!is.element(i, installed.packages()[,1])) {
+      install.packages(p, dep = TRUE, repos = "http://cran.wu.ac.at")
+    }
+    library(i, character.only = TRUE)
+  }
+}
 
-install.packages("tidygraph", dependencies = T)
-install.packages("tidyverse", dependencies = T)
-
-install.packages("ggraph", dependencies = T)
-install.packages("GGally", dependencies = T)
-
-install.packages("RColorBewer", dependencies = T)
-install.packages("rnetcarto", dependencies = T)
-```
-
-Nun werden die installierten Pakete als Bibliotheken deklariert und damit in der Umgebung auch instanziiert.
-```{r Libraries, message=FALSE}
-library(igraph)
-library(igraphdata)
-
-library(tidygraph)
-library(tidyverse)
-
-library(ggraph)
-library(GGally)
-
-library(RColorBrewer)
-library(rnetcarto)
+dP('igraph', 'igraphdata', 'tidygraph', 'tidyverse', 'ggraph', 'GGally', 'RColorBrewer', 'rnetcarto')
 ```
 
 Damit keine Konflikte mit alten Daten auftreten und die Berechnungen möglichst performant laufen können, werden alle alten Daten aus dem Environment gelöscht.
